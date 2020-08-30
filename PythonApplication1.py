@@ -64,7 +64,6 @@ def aDown(event):
     global ctrl, lastWord
     if ctrl:
         lastWord = ""
-
 ## Create notification window
 root = Tk()
 Label(root).pack()
@@ -87,7 +86,7 @@ def lastTyped(event):
         if name == "backspace":
             lastWord = lastWord[:-1]
             hideNotification()
-    elif not ctrl:
+    else:
         lastWord += name
         hideNotification()
     
@@ -133,6 +132,21 @@ def showNotification(event=None):
         else:
             Label(root, text=currentList[i], fg="black", font=fontText).pack(side=LEFT)
 
+def changeWordRight(event=None):
+    global currentIndex, currentBold
+    currentBold += 1
+    currentIndex += 1
+    if currentIndex > 9:
+        currentIndex = 0
+    showNotification()
+
+def changeWordLeft(event=None):
+    global currentIndex, currentBold
+    currentBold -= 1
+    currentIndex -= 1
+    if currentIndex < 0:
+        currentIndex = 9
+    showNotification()
 
 def changeWordRight(event=None):
     global currentIndex, currentBold,alt
@@ -158,7 +172,7 @@ def overwriteWord(event=None):
         lenLast = len(lastWord)
         selWord = currentList[0]
         selWord = selWord[lenLast:]
-        wordPrint = selWord + " "
+        wordPrint = selWord
         keyboard.write("\b", delay=0, restore_state_after=True, exact=None)
         keyboard.write(wordPrint, delay=0, restore_state_after=True, exact=None)
     if GUIvis:
