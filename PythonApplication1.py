@@ -1,6 +1,7 @@
 from tkinter import *
 import keyboard
 import requests
+import pyautogui
 
 global lastWord, tempWord
 lastWord = ""
@@ -37,6 +38,13 @@ def ctrlUp(event):
     global ctrl
     ctrl = False
 
+def placeWin(event):
+    pointPos = pyautogui.position()
+    global posX, posY
+    posX = pointPos[0]
+    posY = pointPos[1]
+    showNotification(event=None)
+
 def shiftDown(event):
     global shift
     shift = True
@@ -52,6 +60,8 @@ def altDown(event):
 def altUp(event):
     global alt
     alt = False
+    overwriteWord()
+    hideNotification()
 
 def arrowKey(event):
     global shift, lastWord
@@ -101,9 +111,9 @@ def APICall():
     wordsLeng = len(rekwest.json())
 
     sugg = [0] * wordsLeng
-
     for i in range(wordsLeng):
         sugg[i] = rekwest.json()[i].get("word")
+    sugg.insert(0, lastWord)
 
 def showNotification(event=None):
     global posX, posY, currentBold, currentIndex, currentList, lastWord, tempWord, GUIvis
@@ -115,12 +125,14 @@ def showNotification(event=None):
     # Removing previous text
     killAllChildren()
     currentList = []
-    
+
     # Gets a set of up to 5 words from the suggestions list, and stores them in a list
     for i in range(currentIndex, len(sugg)):
         if i > currentIndex + 4: break
         if lastWord == "": break
         currentList.append(sugg[i])
+    if len(currentList) < 1:
+        currentList = [""]
 
     # Set position of notification on screen
     root.geometry("+" + str(posX) + "+" + str(posY))
@@ -133,27 +145,11 @@ def showNotification(event=None):
             Label(root, text=currentList[i], fg="black", font=fontText).pack(side=LEFT)
 
 def changeWordRight(event=None):
-    global currentIndex, currentBold
-    currentBold += 1
-    currentIndex += 1
-    if currentIndex > 9:
-        currentIndex = 0
-    showNotification()
-
-def changeWordLeft(event=None):
-    global currentIndex, currentBold
-    currentBold -= 1
-    currentIndex -= 1
-    if currentIndex < 0:
-        currentIndex = 9
-    showNotification()
-
-def changeWordRight(event=None):
     global currentIndex, currentBold,alt
     if alt:
         currentBold += 1
         currentIndex += 1
-        if currentIndex > 9:
+        if currentIndex > 10:
             currentIndex = 0
         showNotification()
 
@@ -163,20 +159,23 @@ def changeWordLeft(event=None):
         currentBold -= 1
         currentIndex -= 1
         if currentIndex < 0:
-            currentIndex = 9
+            currentIndex = 10
         showNotification()
 
 def overwriteWord(event=None):
-    global GUIvis
+    global GUIvis, currentList, lastWord
     def wordFill():
         lenLast = len(lastWord)
         selWord = currentList[0]
         selWord = selWord[lenLast:]
-        wordPrint = selWord
-        keyboard.write("\b", delay=0, restore_state_after=True, exact=None)
-        keyboard.write(wordPrint, delay=0, restore_state_after=True, exact=None)
+        if len(selWord) < 1:
+            wordPrint = selWord
+        else:
+            wordPrint = selWord + " "
+            keyboard.write(wordPrint, delay=0, restore_state_after=True, exact=None)
     if GUIvis:
         wordFill()
+        lastWord = ""
 
 def hideNotification(event=None):
     global posX, posY, currentIndex, currentList, currentBold, GUIvis
@@ -198,15 +197,12 @@ def killAllChildren():
         child.destroy()
 
 # Setting key events
-keyboard.on_press_key("right shift", showNotification, suppress=False)
-keyboard.on_press_key("ctrl", hideNotification, suppress=False)
-keyboard.on_press_key("enter", overwriteWord, suppress=False)
+keyboard.on_press_key("right shift", placeWin, suppress=False)
 keyboard.on_press_key("right", changeWordRight, suppress=False)
 keyboard.on_press_key("left", changeWordLeft, suppress=False)
 keyboard.on_press(lastTyped, suppress=False)
 keyboard.on_press_key("ctrl", ctrlDown, suppress=False)
 keyboard.on_press_key("shift", shiftDown, suppress=False)
-keyboard.on_press_key("a", aDown, suppress=False)
 keyboard.on_press_key("a", aDown, suppress=False)
 keyboard.on_press_key("up", arrowKey, suppress=False)
 keyboard.on_press_key("down", arrowKey, suppress=False)
@@ -216,6 +212,7 @@ keyboard.on_press_key("alt", altDown, suppress=False)
 keyboard.on_release_key("alt", altUp, suppress=False)
 keyboard.on_release_key("ctrl", ctrlUp, suppress=False)
 keyboard.on_release_key("shift", shiftUp, suppress=False)
+
 # You don't know what it does, and neither do I. Don't worry about it
 root.update_idletasks()
 root.mainloop()
