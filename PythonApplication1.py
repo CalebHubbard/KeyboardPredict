@@ -26,7 +26,7 @@ global GUIvis
 GUIvis = False
 
 
-global ctrl,shift
+global ctrl,shift,alt
 ctrl = False
 shift = False
 def ctrlDown(event):
@@ -44,6 +44,14 @@ def shiftDown(event):
 def shiftUp(event):
     global shift
     shift = False
+
+def altDown(event):
+    global alt
+    alt = True
+
+def altUp(event):
+    global alt
+    alt = False
 
 def arrowKey(event):
     global shift, lastWord
@@ -70,7 +78,7 @@ posX = 200
 posY = 200
 
 def lastTyped(event):
-    global lastWord, currentIndex, ctrlA
+    global lastWord, currentIndex
     name = event.name
     if len(name) > 1:
         if name == "space" or name == "enter":
@@ -104,10 +112,6 @@ def showNotification(event=None):
     if lastWord != tempWord:
         APICall()
     tempWord = lastWord;
-    currentBold += 1
-    currentIndex += 1
-    if currentIndex > 9:
-        currentIndex = 0
 
     # Removing previous text
     killAllChildren()
@@ -116,6 +120,7 @@ def showNotification(event=None):
     # Gets a set of up to 5 words from the suggestions list, and stores them in a list
     for i in range(currentIndex, len(sugg)):
         if i > currentIndex + 4: break
+        if lastWord == "": break
         currentList.append(sugg[i])
 
     # Set position of notification on screen
@@ -128,6 +133,24 @@ def showNotification(event=None):
         else:
             Label(root, text=currentList[i], fg="black", font=fontText).pack(side=LEFT)
 
+
+def changeWordRight(event=None):
+    global currentIndex, currentBold,alt
+    if alt:
+        currentBold += 1
+        currentIndex += 1
+        if currentIndex > 9:
+            currentIndex = 0
+        showNotification()
+
+def changeWordLeft(event=None):
+    global currentIndex, currentBold,alt
+    if alt:
+        currentBold -= 1
+        currentIndex -= 1
+        if currentIndex < 0:
+            currentIndex = 9
+        showNotification()
 
 def overwriteWord(event=None):
     global GUIvis
@@ -164,6 +187,8 @@ def killAllChildren():
 keyboard.on_press_key("right shift", showNotification, suppress=False)
 keyboard.on_press_key("ctrl", hideNotification, suppress=False)
 keyboard.on_press_key("enter", overwriteWord, suppress=False)
+keyboard.on_press_key("right", changeWordRight, suppress=False)
+keyboard.on_press_key("left", changeWordLeft, suppress=False)
 keyboard.on_press(lastTyped, suppress=False)
 keyboard.on_press_key("ctrl", ctrlDown, suppress=False)
 keyboard.on_press_key("shift", shiftDown, suppress=False)
@@ -173,6 +198,8 @@ keyboard.on_press_key("up", arrowKey, suppress=False)
 keyboard.on_press_key("down", arrowKey, suppress=False)
 keyboard.on_press_key("left", arrowKey, suppress=False)
 keyboard.on_press_key("right", arrowKey, suppress=False)
+keyboard.on_press_key("alt", altDown, suppress=False)
+keyboard.on_release_key("alt", altUp, suppress=False)
 keyboard.on_release_key("ctrl", ctrlUp, suppress=False)
 keyboard.on_release_key("shift", shiftUp, suppress=False)
 # You don't know what it does, and neither do I. Don't worry about it
